@@ -9,7 +9,7 @@ import java.util.*;
 abstract class Definition {
     public String name;
 
-    //public abstract void format(Formatter.Context context);
+    public abstract void format(FormatterContext context);
 }
 
 /** Represents a set of constants. */
@@ -29,12 +29,10 @@ class ConstsDef extends Definition {
 
     private List<Constant> constants = new Vector<Constant>();
 
-    /*
     @Override
-    public void format(Formatter.Context context) {
+    public void format(FormatterContext context) {
         context.formatConsts(this);
     }
-    */
 
     public List<Constant> getConstants() { return constants; }
 
@@ -63,12 +61,10 @@ class CellDef extends Definition {
 
     private List<Property> properties = new Vector<Property>();
 
-    /*
     @Override
-    public void format(Formatter.Context context) {
+    public void format(FormatterContext context) {
         context.formatCell(this);
     }
-    */
 
     public List<Property> getProperties() { return properties; }
   
@@ -89,9 +85,7 @@ class EventDef extends CellDef {
 class Reference {
     public String target;
 
-    /*
-    public void format(Formatter.Context context) {
+    public void format(FormatterContext context) {
         context.formatReference(this);
     }
-    */
 }
