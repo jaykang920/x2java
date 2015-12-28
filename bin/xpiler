@@ -1,0 +1,27 @@
+#!/bin/sh
+
+if [ -z "$X2JAVA_HOME" ] ; then
+  PRG="$0"
+
+  # for relative symlinks
+  while [ -h $PRG ] ; do
+    ls=`ls -ld $PRG`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '/.*' > /dev/null; then
+      PRG="$link"
+    else
+      PRG="`dirname $PRG`/$link"
+    fi
+  done
+
+  X2JAVA_HOME=`dirname $PRG`/..
+
+  # make it fully qualified
+  X2JAVA_HOME=`cd "$X2JAVA_HOME" && pwd`
+
+  cd - > /dev/null
+fi
+
+CP=$CLASSPATH:$X2JAVA_HOME/lib/xpiler-0.1.0.jar
+
+java -cp "$CP" xpiler.App "$@"
