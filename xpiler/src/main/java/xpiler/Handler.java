@@ -4,7 +4,7 @@
 package xpiler;
 
 /** Document file handler interface. */
-public interface Handler {
+interface Handler {
     public static class Result {
         public boolean handled;
         public Document doc;
