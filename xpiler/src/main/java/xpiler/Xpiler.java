@@ -18,7 +18,7 @@ class Xpiler {
         handlers.put(".xml", new XmlHandler());
 
         formatters = new HashMap<String, Formatter>();
-        //formatters.put("java", new JavaFormatter());
+        formatters.put("java", new JavaFormatter());
     }
 
     public static Options getOptions() { return options; }

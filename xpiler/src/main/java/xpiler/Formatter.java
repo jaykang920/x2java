@@ -6,7 +6,7 @@ package xpiler;
 import java.io.*;
 
 /** Abstract base class for static output file formatters. */
-abstract class Formatter {
+interface Formatter {
     public abstract boolean format(Document doc, String outDir);
 
     public abstract String getDescription();

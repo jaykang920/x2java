@@ -1,5 +1,5 @@
-// Copyright (c) 2013 Jae-jun Kang
-// See the file COPYING for license details.
+// Copyright (c) 2016 Jae-jun Kang
+// See the file LICENSE for details.
 
 package xpiler;
 
@@ -8,6 +8,7 @@ import java.util.*;
 import javax.xml.parsers.*;
 
 import org.xml.sax.*;
+import org.xml.sax.ext.*;
 import org.xml.sax.helpers.*;
 
 class XmlHandler implements Handler {
@@ -15,11 +16,19 @@ class XmlHandler implements Handler {
 
     public Result handle(String path) {
         Result result = new Result();
-        Context context = new Context();
-    
         try {
             SAXParser parser = factory.newSAXParser();
-            parser.parse(new File(path), context);
+            Context context = new Context();
+
+            File file = new File(path);
+            InputStream inputStream = new FileInputStream(file);
+            Reader reader = new InputStreamReader(inputStream, "UTF-8");
+
+            InputSource inputSource = new InputSource(reader);
+            inputSource.setEncoding("UTF-8");
+
+            parser.parse(inputSource, context);
+
             result.handled = true;
             result.doc = context.doc;
         } catch (UnknownDocumentException ude) {
@@ -33,7 +42,7 @@ class XmlHandler implements Handler {
 
     @SuppressWarnings("serial")
     private static class UnknownDocumentException extends SAXException {}
-  
+
     private static class Context extends DefaultHandler {
         static interface StartHandler {
             void handle(Context context, Attributes attributes);
@@ -45,7 +54,7 @@ class XmlHandler implements Handler {
         private static Map<String, StartHandler> startHandlers;
         private static Map<String, EndHandler> endHandlers;
         private static Map<String, String> defaultValues;
-    
+
         static {
             startHandlers = new HashMap<String, StartHandler>();
             startHandlers.put("x2", new StartHandler() {
@@ -106,11 +115,11 @@ class XmlHandler implements Handler {
             defaultValues.put("int64", "0");
             defaultValues.put("string", "\"\"");
         }
-    
+
         public Document doc;
         public Definition current;
         public StringBuilder text;
-    
+
         public Context() {
             doc = new Document();
             text = new StringBuilder();
@@ -149,7 +158,7 @@ class XmlHandler implements Handler {
         }
 
         // startElement helpers
-    
+
         private void startRoot(Attributes attributes) {
             String namespace = attributes.getValue("namespace");
             doc.namespace = (namespace != null ? namespace : "");
@@ -199,9 +208,9 @@ class XmlHandler implements Handler {
             prop.type = attributes.getValue("type");
             def.getProperties().add(prop);
         }
-    
+
         // endElement helpers
-    
+
         private void endRoot() {
         }
 

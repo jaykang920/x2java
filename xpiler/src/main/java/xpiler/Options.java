@@ -71,7 +71,7 @@ class Options {
         for (Map.Entry<String, Formatter> entry : Xpiler.getFormatters().entrySet()) {
             out.format("%20s : %s", entry.getKey(), entry.getValue().getDescription());
             if (entry.getKey() == DEFAULT_SPEC) {
-            out.print(" (default)");
+                out.print(" (default)");
             }
             out.println();
         }

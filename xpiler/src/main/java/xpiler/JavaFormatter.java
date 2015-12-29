@@ -6,11 +6,10 @@ package xpiler;
 import java.io.*;
 import java.util.*;
 
-class JavaFormatter extends Formatter {
+class JavaFormatter implements Formatter {
     private static final String extension = ".java";
     private static final String description = "Java";
 
-    @Override
     public boolean format(Document doc, String outDir) {
         PrintStream out = null;
         try {
@@ -64,10 +63,8 @@ class JavaFormatter extends Formatter {
         o.println("}");
     }
   
-    @Override
     public String getDescription() { return description; }
   
-    @Override
     public boolean isUpToDate(String path, String outDir) {
         File source = new File(path);
         File target = new File(

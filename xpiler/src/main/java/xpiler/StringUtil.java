@@ -5,9 +5,9 @@ package xpiler;
 
 import java.util.*;
 
-public class StringUtil {
+class StringUtil {
     private StringUtil() {}
-  
+
     public static String firstToLower(String s) {
         if (isNullOrEmpty(s) || Character.isLowerCase(s.charAt(0))) {
             return s;
