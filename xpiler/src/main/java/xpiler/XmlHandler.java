@@ -17,7 +17,7 @@ class XmlHandler implements Handler {
     public Result handle(String path) {
         Result result = new Result();
         try {
-            SAXParser parser = factory.newSAXParser();
+            SAXParser saxParser = factory.newSAXParser();
             Context context = new Context();
 
             File file = new File(path);
@@ -27,7 +27,11 @@ class XmlHandler implements Handler {
             InputSource inputSource = new InputSource(reader);
             inputSource.setEncoding("UTF-8");
 
-            parser.parse(inputSource, context);
+            XMLReader xmlReader = saxParser.getXMLReader();
+            xmlReader.setProperty(
+                "http://xml.org/sax/properties/lexical-handler", context);
+
+            saxParser.parse(inputSource, context);
 
             result.handled = true;
             result.doc = context.doc;
@@ -43,7 +47,8 @@ class XmlHandler implements Handler {
     @SuppressWarnings("serial")
     private static class UnknownDocumentException extends SAXException {}
 
-    private static class Context extends DefaultHandler {
+    private static class Context
+            extends DefaultHandler implements LexicalHandler {
         static interface StartHandler {
             void handle(Context context, Attributes attributes);
         }
@@ -117,8 +122,9 @@ class XmlHandler implements Handler {
         }
 
         public Document doc;
-        public Definition current;
-        public StringBuilder text;
+        private Definition current;
+        private StringBuilder text;
+        private String comment;
 
         public Context() {
             doc = new Document();
@@ -152,7 +158,7 @@ class XmlHandler implements Handler {
         }
 
         @Override
-        public void characters(char ch[], int start, int length)
+        public void characters(char[] ch, int start, int length)
             throws SAXException {
             text.append(ch, start, length);
         }
@@ -169,6 +175,9 @@ class XmlHandler implements Handler {
             def.name = attributes.getValue("name");
             doc.getDefinitions().add(def);
             current = def;
+            if (comment != null) {
+                def.comment = comment;
+            }
         }
 
         private void startCell(Attributes attributes) {
@@ -180,6 +189,9 @@ class XmlHandler implements Handler {
             }
             doc.getDefinitions().add(def);
             current = def;
+            if (comment != null) {
+                def.comment = comment;
+            }
         }
 
         private void startEvent(Attributes attributes) {
@@ -192,6 +204,9 @@ class XmlHandler implements Handler {
             def.id = attributes.getValue("id");
             doc.getDefinitions().add(def);
             current = def;
+            if (comment != null) {
+                def.comment = comment;
+            }
         }
 
         private void startConstant(Attributes attributes) {
@@ -199,6 +214,9 @@ class XmlHandler implements Handler {
             ConstsDef.Constant constant = new ConstsDef.Constant();
             constant.name = attributes.getValue("name");
             def.getConstants().add(constant);
+            if (comment != null) {
+                constant.comment = comment;
+            }
         }
 
         private void startProperty(Attributes attributes) {
@@ -207,6 +225,9 @@ class XmlHandler implements Handler {
             prop.name = attributes.getValue("name");
             prop.type = attributes.getValue("type");
             def.getProperties().add(prop);
+            if (comment != null) {
+                prop.comment = comment;
+            }
         }
 
         // endElement helpers
@@ -216,14 +237,17 @@ class XmlHandler implements Handler {
 
         private void endConsts() {
             current = null;
+            comment = null;
         }
 
         private void endCell() {
             current = null;
+            comment = null;
         }
 
         private void endEvent() {
             current = null;
+            comment = null;
         }
 
         private void endConstant() {
@@ -233,6 +257,7 @@ class XmlHandler implements Handler {
                 ConstsDef.Constant constant = constants.get(constants.size() - 1);
                 constant.value = text.toString().trim();
             }
+            comment = null;
         }
 
         private void endProperty() {
@@ -244,6 +269,32 @@ class XmlHandler implements Handler {
             } else {
                 prop.defaultValue = defaultValues.get(prop.type);
             }
+            comment = null;
+        }
+
+        // LexicalHandler implementation
+
+        public void comment(char[] ch, int start, int length) throws SAXException {
+            comment = new String(ch, start, length);
+        }
+
+        public void startCDATA() throws SAXException {
+        }
+
+        public void endCDATA() throws SAXException {
+        }
+
+        public void startDTD(String arg0, String arg1, String arg2)
+                throws SAXException {
+        }
+
+        public void endDTD() throws SAXException {
+        }
+
+        public void startEntity(String arg0) throws SAXException {
+        }
+
+        public void endEntity(String arg0) throws SAXException {
         }
     }
 }
