@@ -79,27 +79,24 @@ class Xpiler {
         }
 
         Handler handler = handlers.get(extension.toLowerCase());
-        if (handler == null ||
-            (!options.isForced() && formatter.isUpToDate(path, outDir))) {
+        if (handler == null) {
             return;
         }
-    
+
         Handler.Result result = handler.handle(path);
         if (result.handled == false) {
             return;
         }
 
-        System.out.println(filename);
-    
         if (result.handled == true && result.doc == null) {
             System.out.format("error: %s\n", result.message);
             error = true;
             return;
         }
-    
+
         Document doc = result.doc;
-        doc.baseName = PathUtil.getBaseName(filename);
-    
+        doc.inputPath = path;
+
         File dir = new File(outDir);
         if (!dir.exists()) {
             dir.mkdirs();

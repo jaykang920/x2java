@@ -7,8 +7,8 @@ import java.util.*;
 
 /** Represents a single definition document. */
 class Document {
-    public String baseName;
     public String namespace;
+    public String inputPath;
 
     private List<Reference> references = new Vector<Reference>();
     private List<Definition> definitions = new Vector<Definition>();

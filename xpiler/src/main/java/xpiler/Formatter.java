@@ -10,8 +10,6 @@ interface Formatter {
     public abstract boolean format(Document doc, String outDir);
 
     public abstract String getDescription();
-
-    public abstract boolean isUpToDate(String path, String outDir);
 }
 
 /** Abstract base class for concrete formatter contexts. */

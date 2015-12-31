@@ -29,6 +29,11 @@ class PathUtil {
         return (index >= 0 ? filename.substring(index) : "");
     }
 
+    public static String getFilename(String path) {
+        File file = new File(path);
+        return file.getName();
+    }
+
     public static String join(Collection<String> strings) {
         return StringUtil.join(File.separatorChar, strings);
     }

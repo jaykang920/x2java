@@ -45,7 +45,7 @@ class CellDef extends Definition {
     public static class Property {
         public int index;
         public String name;
-        public String type;
+        public TypeSpec typeSpec;
         public String defaultValue;
         public String nativeName;
         public String nativeType;
@@ -67,7 +67,7 @@ class CellDef extends Definition {
     }
 
     public List<Property> getProperties() { return properties; }
-  
+
     public boolean hasProperties() { return !properties.isEmpty(); }
 
     public boolean isEvent() { return false; }

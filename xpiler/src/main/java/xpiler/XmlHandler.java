@@ -11,6 +11,7 @@ import org.xml.sax.*;
 import org.xml.sax.ext.*;
 import org.xml.sax.helpers.*;
 
+/** XML document file handler. */
 class XmlHandler implements Handler {
     private static SAXParserFactory factory = SAXParserFactory.newInstance();
 
@@ -36,7 +37,7 @@ class XmlHandler implements Handler {
             result.handled = true;
             result.doc = context.doc;
         } catch (UnknownDocumentException ude) {
-            // Unknown format;
+            // unknown format
         } catch (Exception e) {
             result.handled = true;
             result.message = e.getMessage();
@@ -58,13 +59,17 @@ class XmlHandler implements Handler {
 
         private static Map<String, StartHandler> startHandlers;
         private static Map<String, EndHandler> endHandlers;
-        private static Map<String, String> defaultValues;
 
         static {
             startHandlers = new HashMap<String, StartHandler>();
             startHandlers.put("x2", new StartHandler() {
                 public void handle(Context context, Attributes attributes) {
                     context.startRoot(attributes);
+                }
+            });
+            startHandlers.put("ref", new StartHandler() {
+                public void handle(Context context, Attributes attributes) {
+                    context.startReference(attributes);
                 }
             });
             startHandlers.put("consts", new StartHandler() {
@@ -97,6 +102,9 @@ class XmlHandler implements Handler {
             endHandlers.put("x2", new EndHandler() {
                 public void handle(Context context) { context.endRoot(); }
             });
+            endHandlers.put("ref", new EndHandler() {
+                public void handle(Context context) { context.endReference(); }
+            });
             endHandlers.put("consts", new EndHandler() {
                 public void handle(Context context) { context.endConsts(); }
             });
@@ -106,19 +114,12 @@ class XmlHandler implements Handler {
             endHandlers.put("event", new EndHandler() {
                 public void handle(Context context) { context.endEvent(); }
             });
-            endHandlers.put("constant", new EndHandler() {
+            endHandlers.put("const", new EndHandler() {
                 public void handle(Context context) { context.endConstant(); }
             });
             endHandlers.put("property", new EndHandler() {
                 public void handle(Context context) { context.endProperty(); }
             });
-
-            defaultValues = new HashMap<String, String>();
-            defaultValues.put("int8", "0");
-            defaultValues.put("int16", "0");
-            defaultValues.put("int32", "0");
-            defaultValues.put("int64", "0");
-            defaultValues.put("string", "\"\"");
         }
 
         public Document doc;
@@ -159,8 +160,10 @@ class XmlHandler implements Handler {
 
         @Override
         public void characters(char[] ch, int start, int length)
-            throws SAXException {
-            text.append(ch, start, length);
+                throws SAXException {
+            if (length > 0) {
+                text.append(ch, start, length);
+            }
         }
 
         // startElement helpers
@@ -170,9 +173,26 @@ class XmlHandler implements Handler {
             doc.namespace = (namespace != null ? namespace : "");
         }
 
+        private void startReference(Attributes attributes) {
+            Reference reference = new Reference();
+            reference.target = attributes.getValue("target");
+            doc.getReferences().add(reference);
+        }
+
         private void startConsts(Attributes attributes) {
+            String name = attributes.getValue("name");
+            String type = attributes.getValue("type");
+
+            if (name == null || name.isEmpty()) {
+                return;
+            }
+            if (type == null || type.isEmpty()) {
+                type = "int32";  // default type
+            }
+
             ConstsDef def = new ConstsDef();
-            def.name = attributes.getValue("name");
+            def.name = name;
+            def.type = type;
             doc.getDefinitions().add(def);
             current = def;
             if (comment != null) {
@@ -184,9 +204,6 @@ class XmlHandler implements Handler {
             CellDef def = new CellDef();
             def.name = attributes.getValue("name");
             def.base = attributes.getValue("base");
-            if (def.base == null || def.base.isEmpty()) {
-                def.base = "x2.Cell";
-            }
             doc.getDefinitions().add(def);
             current = def;
             if (comment != null) {
@@ -198,9 +215,6 @@ class XmlHandler implements Handler {
             EventDef def = new EventDef();
             def.name = attributes.getValue("name");
             def.base = attributes.getValue("base");
-            if (def.base == null || def.base.isEmpty()) {
-                def.base = "x2.Event";
-            }
             def.id = attributes.getValue("id");
             doc.getDefinitions().add(def);
             current = def;
@@ -210,9 +224,15 @@ class XmlHandler implements Handler {
         }
 
         private void startConstant(Attributes attributes) {
+            String name = attributes.getValue("name");
+
+            if (name == null || name.isEmpty()) {
+                return;
+            }
+
             ConstsDef def = (ConstsDef)current;
             ConstsDef.Constant constant = new ConstsDef.Constant();
-            constant.name = attributes.getValue("name");
+            constant.name = name;
             def.getConstants().add(constant);
             if (comment != null) {
                 constant.comment = comment;
@@ -220,10 +240,25 @@ class XmlHandler implements Handler {
         }
 
         private void startProperty(Attributes attributes) {
+            String name = attributes.getValue("name");
+            String type = attributes.getValue("type");
+
+            if (name == null || name.isEmpty()) {
+                return;
+            }
+            if (type == null || type.isEmpty()) {
+                return;
+            }
+
+            TypeSpec typeSpec = Types.parse(type);
+            if (typeSpec == null) {
+                return;
+            }
+
             CellDef def = (CellDef)current;
             CellDef.Property prop = new CellDef.Property();
-            prop.name = attributes.getValue("name");
-            prop.type = attributes.getValue("type");
+            prop.name = name;
+            prop.typeSpec = typeSpec;
             def.getProperties().add(prop);
             if (comment != null) {
                 prop.comment = comment;
@@ -233,6 +268,9 @@ class XmlHandler implements Handler {
         // endElement helpers
 
         private void endRoot() {
+        }
+
+        private void endReference() {
         }
 
         private void endConsts() {
@@ -267,7 +305,7 @@ class XmlHandler implements Handler {
             if (text.length() > 0) {
                 prop.defaultValue = text.toString().trim();
             } else {
-                prop.defaultValue = defaultValues.get(prop.type);
+                prop.defaultValue = "";
             }
             comment = null;
         }
@@ -284,17 +322,17 @@ class XmlHandler implements Handler {
         public void endCDATA() throws SAXException {
         }
 
-        public void startDTD(String arg0, String arg1, String arg2)
+        public void startDTD(String name, String publicId, String systemId)
                 throws SAXException {
         }
 
         public void endDTD() throws SAXException {
         }
 
-        public void startEntity(String arg0) throws SAXException {
+        public void startEntity(String name) throws SAXException {
         }
 
-        public void endEntity(String arg0) throws SAXException {
+        public void endEntity(String name) throws SAXException {
         }
     }
 }
