@@ -25,7 +25,7 @@ public class Hash {
     // Static update methods
 
     public static int update(int seed, boolean value) {
-        return ((seed << 5) + seed) ^ (value ? 2 : 1);
+        return ((seed << 5) + seed) ^ (value ? 1 : 0);
     }
 
     public static int update(int seed, int value) {
