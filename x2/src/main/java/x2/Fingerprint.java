@@ -3,6 +3,8 @@
 
 package x2;
 
+import java.util.concurrent.atomic.*;
+
 import x2.util.Hash;
 
 /** Manages a fixed-length compact array of bit values. */
@@ -28,7 +30,7 @@ public class Fingerprint implements Comparable<Fingerprint> {
     /** Constructs a new fingerprint object that can hold the specified number
      *  of bit values, which are initially set to <b>false</b>.
      *  @param length the number of bit values in the new fingerprint.
-     *  @throws IllegalArgumentException when <code>length</length> is less than 0.
+     *  @throws IllegalArgumentException when <code>length</code> is less than 0.
      */
     public Fingerprint(int length) {
         if (length < 0) {
@@ -42,7 +44,7 @@ public class Fingerprint implements Comparable<Fingerprint> {
     }
 
     /** Constructs a new fingerprint object that contains bit values copied from
-     *  the specified fingerprint.
+     *  the specified one.
      *  @param other a fingerprint object to copy from.
      */
     public Fingerprint(Fingerprint other) {
@@ -145,10 +147,10 @@ public class Fingerprint implements Comparable<Fingerprint> {
      *  <p>
      *  Given two fingerprint objects x and y, x.equivalent(y) returns
      *  <b>true</b> if:
-     *    <list type="bullet">
-     *      <item>x.length is less than or equal to y.length</item>
-     *      <item>All the bits set in x are also set in y</item>
-     *    </list>
+     *    <ul>
+     *      <li>x.length is less than or equal to y.length</li>
+     *      <li>All the bits set in x are also set in y</li>
+     *    </ul>
      *  @param other the reference object which to compare.
      *  @return <b>true</b> if <code>other</code> is equivalent to this object;
      *  otherwise, <b>false</b>.
@@ -276,10 +278,10 @@ public class Fingerprint implements Comparable<Fingerprint> {
         private Fingerprint fingerprint;
         private int offset;
 
-        /** Constructs a new Capo object with the specified fingerprint and
+        /** Constructs a new capo object with the specified fingerprint and
          *  offset.
-         *  @param fingerprint a Fingerprint object to access.
-         *  @param position an integer offset to apply constantly.
+         *  @param fingerprint  a fingerprint object to access.
+         *  @param offset  an integer offset to apply constantly.
          */
         public Capo(Fingerprint fingerprint, int offset) {
             this.fingerprint = fingerprint;
@@ -293,8 +295,8 @@ public class Fingerprint implements Comparable<Fingerprint> {
          *  position index (<code>offset</code> + <code>index</code>) is greater
          *  than or equal to the length of the underlying fingerprint, it simply
          *  returns <b>false</b>.
-         *  @param index the zero-based index of the bit to get.</param>
-         *  @return the bit value at the position (<code>offset</code> + <code>index</c>).
+         *  @param index  the zero-based index of the bit to get.
+         *  @return the  bit value at the position <code>(offset + index)</code>.
          */
         public boolean get(int index) {
             int effectiveIndex = offset + index;
@@ -307,29 +309,41 @@ public class Fingerprint implements Comparable<Fingerprint> {
 }
 
 /** Extends Fingerprint class to hold an additional reference count. */
-class Slot extends Fingerprint {
-    private volatile int refCount;
+class Slot extends Fingerprint implements Comparable<Slot> {
+    private AtomicInteger refCount;
 
-    /** Initializes a new instance of the Slot class that contains bit values
-     *  copied from the specified Fingerprint.
-     *  @param fingerprint  a Fingerprint object to copy from.
+    /** Constructs a new slot object that contains the bit values copied from
+     * the specified fingerprint.
+     *  @param fingerprint  a fingerprint object to copy from.
      */
     public Slot(Fingerprint fingerprint) {
         super(fingerprint);
-        refCount = 1;
+        refCount = new AtomicInteger(1);
     }
 
-    /** Increases the reference count of this Slot.
+    /** Increases the reference count of this slot.
      *  @returns  the resultant reference count.
      */
     public int addRef() {
-        return ++refCount;
+        return refCount.incrementAndGet();
     }
 
-    /** Decreases the reference count of this Slot.
+    /** Compares this object with the specified object for order.
+     *  Implements Comparable(T).compareTo interface.
+     *  @param other  a slot object to be compared with this.
+     *  @return a value that indicates the relative order of the slot objects
+     *  being compared. Zero return value means that this is equal to
+     *  <code>other</code>, while negative(positive) integer return value means
+     *  that this is less(greater) than <code>other</code>.
+     */
+    public int compareTo(Slot other) {
+        return super.compareTo(other);
+    }
+
+    /** Decreases the reference count of this slot.
      *  @returns  the resultant reference count.
      */
     public int removeRef() {
-        return --refCount;
+        return refCount.decrementAndGet();
     }
 }
