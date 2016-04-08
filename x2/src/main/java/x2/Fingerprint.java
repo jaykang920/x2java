@@ -3,9 +3,9 @@
 
 package x2;
 
-import java.util.concurrent.atomic.*;
+import java.io.IOException;
 
-import x2.util.Hash;
+import x2.util.*;
 
 /** Manages a fixed-length compact array of bit values. */
 public class Fingerprint implements Comparable<Fingerprint> {
@@ -18,7 +18,7 @@ public class Fingerprint implements Comparable<Fingerprint> {
     }
 
     /** Gets the number of bits contained in this fingerprint. */
-    public int length() { return length; }
+    public int getLength() { return length; }
 
     /** Gets the minimum number of bytes required to hold all the bits in this
      *  fingerprint.
@@ -104,10 +104,6 @@ public class Fingerprint implements Comparable<Fingerprint> {
             return 1;
         }
         return 0;
-    }
-
-    public void deserialize(Deserializer deserializer) {
-
     }
 
     /** Indicates whether the specified object is equal to this one.
@@ -273,77 +269,55 @@ public class Fingerprint implements Comparable<Fingerprint> {
         block &= ~(1 << index);
     }
 
-    /** Offset-based accessor for the underlying fingerprint. */
-    public class Capo {
-        private Fingerprint fingerprint;
-        private int offset;
+    // Serialization
 
-        /** Constructs a new capo object with the specified fingerprint and
-         *  offset.
-         *  @param fingerprint  a fingerprint object to access.
-         *  @param offset  an integer offset to apply constantly.
-         */
-        public Capo(Fingerprint fingerprint, int offset) {
-            this.fingerprint = fingerprint;
-            this.offset = offset;
-        }
+    public void deserialize(Deserializer deserializer) throws IOException {
+        int length = deserializer.readNonnegativeInt();
+        int lengthInBytes = ((length - 1) >> 3) + 1;
+        int lengthInBlocks = ((lengthInBytes - 1) >> 2) + 1;
+        int effectiveBytes = lengthInBytes();
 
-        /** Gets the bit value at the specified index in the underlying
-         *  fingerprint, applying the offset.
-         *  <p>
-         *  This method does not throw on upper-bound overrun. If the calculated
-         *  position index (<code>offset</code> + <code>index</code>) is greater
-         *  than or equal to the length of the underlying fingerprint, it simply
-         *  returns <b>false</b>.
-         *  @param index  the zero-based index of the bit to get.
-         *  @return the  bit value at the position <code>(offset + index)</code>.
-         */
-        public boolean get(int index) {
-            int effectiveIndex = offset + index;
-            if (effectiveIndex >= fingerprint.length()) {
-                return false;
+        int count = 0;
+        block = 0;
+        for (int i = 0; (i < 4) && (count < lengthInBytes); ++i, ++count) {
+            byte b = deserializer.readByte();
+            if (count < effectiveBytes) {
+                block |= (b << (i << 3));
             }
-            return fingerprint.get(effectiveIndex);
+        }
+        for (int i = 0; i < lengthInBlocks; ++i) {
+            int word = 0;
+            for (int j = 0; (j < 4) && (count < lengthInBytes); ++j, ++count) {
+                byte b = deserializer.readByte();
+                if (count < effectiveBytes) {
+                    word |= (b << (j << 3));
+                }
+            }
+            if (blocks != null && i < blocks.length) {
+                blocks[i] = word;
+            }
         }
     }
-}
 
-/** Extends Fingerprint class to hold an additional reference count. */
-class Slot extends Fingerprint implements Comparable<Slot> {
-    private AtomicInteger refCount;
-
-    /** Constructs a new slot object that contains the bit values copied from
-     * the specified fingerprint.
-     *  @param fingerprint  a fingerprint object to copy from.
-     */
-    public Slot(Fingerprint fingerprint) {
-        super(fingerprint);
-        refCount = new AtomicInteger(1);
+    public int length() {
+        return Serializer.lengthNonnegativeInt(length) + lengthInBytes();
     }
 
-    /** Increases the reference count of this slot.
-     *  @returns  the resultant reference count.
-     */
-    public int addRef() {
-        return refCount.incrementAndGet();
-    }
+    public void serialize(Serializer serializer) {
+        serializer.writeNonnegativeInt(length);
+        int lengthInBytes = lengthInBytes();
 
-    /** Compares this object with the specified object for order.
-     *  Implements Comparable(T).compareTo interface.
-     *  @param other  a slot object to be compared with this.
-     *  @return a value that indicates the relative order of the slot objects
-     *  being compared. Zero return value means that this is equal to
-     *  <code>other</code>, while negative(positive) integer return value means
-     *  that this is less(greater) than <code>other</code>.
-     */
-    public int compareTo(Slot other) {
-        return super.compareTo(other);
-    }
-
-    /** Decreases the reference count of this slot.
-     *  @returns  the resultant reference count.
-     */
-    public int removeRef() {
-        return refCount.decrementAndGet();
+        int count = 0;
+        for (int i = 0; (i < 4) && (count < lengthInBytes); ++i, ++count) {
+            serializer.writeByte((byte)(block >> (i << 3)));
+        }
+        if (blocks == null) {
+            return;
+        }
+        for (int i = 0; i < blocks.length; ++i) {
+            for (int j = 0; (j < 4) && (count < lengthInBytes); ++j, ++count) {
+                serializer.writeByte((byte)(blocks[i] >> (j << 3)));
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@ public class Hash {
     /** Default hash seed value. */
     public static final int SEED = 17;
 
+    // The hash code value in this instance.
     private int code;
 
     /** Constructs a hash object with the default seed value. */
@@ -28,6 +29,14 @@ public class Hash {
         return ((seed << 5) + seed) ^ (value ? 1 : 0);
     }
 
+    public static int update(int seed, byte value) {
+        return ((seed << 5) + seed) ^ value;
+    }
+
+    public static int update(int seed, short value) {
+        return ((seed << 5) + seed) ^ value;
+    }
+
     public static int update(int seed, int value) {
         return ((seed << 5) + seed) ^ value;
     }
@@ -37,7 +46,8 @@ public class Hash {
     }
 
     public static int update(int seed, float value) {
-        return update(seed, (double)value);
+        int bits = Float.floatToRawIntBits(value);
+        return update(seed, bits);
     }
 
     public static int update(int seed, double value) {
@@ -80,6 +90,14 @@ public class Hash {
     // Instance update methods
 
     public void update(boolean value) {
+        code = update(code, value);
+    }
+
+    public void update(byte value) {
+        code = update(code, value);
+    }
+
+    public void update(short value) {
         code = update(code, value);
     }
 

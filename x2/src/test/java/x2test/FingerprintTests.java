@@ -4,20 +4,20 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import x2.Fingerprint;;
+import x2.Fingerprint;
 
-public class FingerprintTest extends TestCase {
-    public FingerprintTest(String testName) {
+public class FingerprintTests extends TestCase {
+    public FingerprintTests(String testName) {
         super(testName);
     }
 
     public static Test suite() {
-        return new TestSuite(FingerprintTest.class);
+        return new TestSuite(FingerprintTests.class);
     }
 
     public void testNegativeLength() {
         try {
-            Fingerprint fp = new Fingerprint(-1);
+            new Fingerprint(-1);
             fail("expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
         }
