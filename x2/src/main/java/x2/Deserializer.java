@@ -176,6 +176,20 @@ public final class Deserializer {
 
     // Read methods for composite types
 
+    public byte[] readBytes() throws IOException {
+        byte[] value = null;
+        int length = readNonnegativeInt();
+        if (length == 0) { return value; }
+
+        buffer.checkLengthToRead(length);
+
+        value = new byte[length];
+        for (int i = 0; i < length; ++i) {
+            value[i] = buffer.get();
+        }
+        return value;
+    }
+
     /** Decodes a cell-derived object out of the underlying buffer. */
     public <T extends Cell> T readCell(Class<T> cls) throws IOException {
         T value = null;

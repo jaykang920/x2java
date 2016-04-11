@@ -3,6 +3,8 @@
 
 package x2;
 
+import java.io.IOException;
+
 import x2.util.*;
 
 /** Common base class for all events. */
@@ -91,6 +93,24 @@ public class Event extends Cell {
     }
 
     // Serialization
+
+    @Override
+    public void deserialize(Deserializer deserializer) throws IOException {
+        super.deserialize(deserializer);
+    }
+
+    @Override
+    public int length() {
+        int length = Serializer.lengthInt(_getTypeId());
+        length += super.length();
+        return length;
+    }
+
+    @Override
+    public void serialize(Serializer serializer) {
+        serializer.writeInt(_getTypeId());
+        super.serialize(serializer);
+    }
 
     // Built-in accessors and mutators
 
