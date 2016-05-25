@@ -51,6 +51,8 @@ class CellDef extends Definition {
         public String nativeType;
 
         public String comment;
+        
+        public Object trait;  // formatter-specific trait
     }
 
     public String base;

@@ -3,7 +3,7 @@
 
 package x2;
 
-import java.util.Calendar;
+import java.util.*;
 
 /** Binary wire format serializer. */
 public final class Serializer {
@@ -177,6 +177,23 @@ public final class Serializer {
     }
 
     // Write/length methods for composite types
+    
+    public int lengthBytes(byte[] value) {
+        int count = (value == null) ? 0 : value.length;
+        int length = lengthNonnegativeInt(count);
+        return length + count;
+    }
+    
+    public void writeBytes(byte[] value) {
+        boolean isNull = (value == null);
+        int length = isNull ? 0 : value.length;
+        writeNonnegativeInt(length);
+        if (!isNull) {
+            for (int i = 0; i < length; ++i) {
+                writeByte(value[i]);
+            }
+        }
+    }
 
     /** Returns the number of bytes required to encode a cell-derived object. */
     public static <T extends Cell> int lengthCell(T value) {
@@ -191,6 +208,30 @@ public final class Serializer {
         writeNonnegativeInt(length);
         if (!isNull) {
             value.serialize(this);
+        }
+    }
+    
+    /** Returns the number of bytes required to encode an ordered list of 32-bit
+     *  integer values.
+     */
+    public static int lengthList(ArrayList<Integer> value) {
+        int count = (value == null) ? 0 : value.size();
+        int length = lengthNonnegativeInt(count);
+        for (int i = 0; i < count; ++i) {
+            length += lengthInt(value.get(i).intValue());
+        }
+        return length;
+    }
+    
+    /** Encodes an ordered list of 32-bit integer values into the underlying buffer. */
+    public void writeList(ArrayList<Integer> value) {
+        boolean isNull = (value == null);
+        int length = isNull ? 0 : value.size();
+        writeNonnegativeInt(length);
+        if (!isNull) {
+            for (int i = 0; i < length; ++i) {
+                writeInt(value.get(i).intValue());
+            }
         }
     }
 

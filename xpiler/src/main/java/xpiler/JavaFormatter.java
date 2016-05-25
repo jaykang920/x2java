@@ -92,55 +92,16 @@ class JavaFormatter implements Formatter {
     }
 
     private static class Context extends FormatterContext {
-        private static Map<String, String> nativeTypes;
-        private static Map<String, String> typeNames;
-        private static Map<String, String> defaultValues;
+        private static class TypeTrait {
+            public String nativeType;
+            public String objectType;
+            public String typeName;
+            public String defaultValue;
+        }
+        private static Map<String, TypeTrait> typeTraits;
 
         private static final String tab = "    ";
         private int baseIndentation = 0;
-
-        static {
-            nativeTypes = new HashMap<String, String>();
-            nativeTypes.put("bool", "boolean");
-            nativeTypes.put("byte", "byte");
-            nativeTypes.put("bytes", "byte[]");
-            nativeTypes.put("int8", "byte");
-            nativeTypes.put("int16", "short");
-            nativeTypes.put("int32", "int");
-            nativeTypes.put("int64", "long");
-            nativeTypes.put("float32", "float");
-            nativeTypes.put("float64", "double");
-            nativeTypes.put("string", "String");
-            nativeTypes.put("datetime", "Calendar");
-            nativeTypes.put("list", "ArrayList");
-            nativeTypes.put("map", "HashMap");
-
-            typeNames = new HashMap<String, String>();
-            typeNames.put("bool", "Boolean");
-            typeNames.put("byte", "Byte");
-            typeNames.put("bytes", "Bytes");
-            typeNames.put("int8", "Byte");
-            typeNames.put("int16", "Short");
-            typeNames.put("int32", "Int");
-            typeNames.put("int64", "Long");
-            typeNames.put("float32", "Float");
-            typeNames.put("float64", "Double");
-            typeNames.put("string", "String");
-            typeNames.put("datetime", "Calendar");
-
-            defaultValues = new HashMap<String, String>();
-            defaultValues.put("bool", "false");
-            defaultValues.put("byte", "0");
-            defaultValues.put("bytes", "null");
-            defaultValues.put("int8", "0");
-            defaultValues.put("int16", "0");
-            defaultValues.put("int32", "0");
-            defaultValues.put("int64", "0");
-            defaultValues.put("float32", ".0f");
-            defaultValues.put("float64", ".0");
-            defaultValues.put("string", "");
-            defaultValues.put("datetime", "null");
-        }
 
         @Override
         public void formatReference(Reference reference) {
@@ -151,8 +112,8 @@ class JavaFormatter implements Formatter {
 
         @Override
         public void formatConsts(ConstsDef def) {
-            if (nativeTypes.containsKey(def.type)) {
-                def.nativeType = nativeTypes.get(def.type);
+            if (typeTraits.containsKey(def.type)) {
+                def.nativeType = typeTraits.get(def.type).nativeType;
             }
             else {
                 return;
@@ -377,7 +338,7 @@ class JavaFormatter implements Formatter {
                     indent(1); out.format("if (touched.get(%d)) {", prop.index);
                     out.println();
                     indent(2); out.format("%s = deserializer.%s;", prop.nativeName,
-                            formatReadMethod(prop.typeSpec));
+                            formatReadMethod(prop));
                     out.println();
                     indent(1); out.println("}");
                 }
@@ -396,7 +357,7 @@ class JavaFormatter implements Formatter {
                     indent(1); out.format("if (touched.get(%d)) {", prop.index);
                     out.println();
                     indent(2); out.format("length += Serializer.%s(%s);",
-                            formatLengthMethod(prop.typeSpec), prop.nativeName);
+                            formatLengthMethod(prop), prop.nativeName);
                     out.println();
                     indent(1); out.println("}");
                 }
@@ -416,7 +377,7 @@ class JavaFormatter implements Formatter {
                     indent(1); out.format("if (touched.get(%d)) {", prop.index);
                     out.println();
                     indent(2); out.format("serializer.%s(%s);",
-                            formatWriteMethod(prop.typeSpec), prop.nativeName);
+                            formatWriteMethod(prop), prop.nativeName);
                     out.println();
                     indent(1); out.println("}");
                 }
@@ -431,10 +392,14 @@ class JavaFormatter implements Formatter {
 
                 prop.nativeName = StringUtil.firstToLower(prop.name) + "_";
                 prop.name = StringUtil.firstToUpper(prop.name);
+                
+                TypeTrait typeTrait = typeTraits.get(prop.typeSpec.type);
+                // typeTrait != null
+                prop.trait = typeTrait;
 
                 if (Types.isPrimitive(prop.typeSpec.type)) {
                     if (StringUtil.isNullOrEmpty(prop.defaultValue)) {
-                        prop.defaultValue = defaultValues.get(prop.typeSpec.type);
+                        prop.defaultValue = typeTrait.defaultValue;
                     }
                     if (prop.typeSpec.type == "string") {
                         prop.defaultValue = "\"" + prop.defaultValue + "\"";
@@ -444,21 +409,23 @@ class JavaFormatter implements Formatter {
                     prop.defaultValue = "null";
                 }
 
-                prop.nativeType = formatTypeSpec(prop.typeSpec);
+                prop.nativeType = formatTypeSpec(prop.typeSpec, false);
             }
         }
 
-        private static String formatTypeSpec(TypeSpec typeSpec) {
+        private static String formatTypeSpec(TypeSpec typeSpec, boolean boxing) {
             String type = typeSpec.type;
             if (!Types.isBuiltin(type)) {
                 return type;  // custom type
             }
-            return Types.isPrimitive(type) ? nativeTypes.get(type)
-                                           : formatCollectionType(typeSpec);
+            TypeTrait typeTrait = typeTraits.get(type);
+            return Types.isPrimitive(type)
+                    ? (boxing ? typeTrait.objectType : typeTrait.nativeType)
+                    : formatCollectionType(typeSpec);
         }
 
         private static String formatCollectionType(TypeSpec typeSpec) {
-            StringBuilder sb = new StringBuilder(nativeTypes.get(typeSpec.type));
+            StringBuilder sb = new StringBuilder(typeTraits.get(typeSpec.type).nativeType);
             if (typeSpec.details != null) {
                 sb.append('<');
                 boolean leading = true;
@@ -469,53 +436,41 @@ class JavaFormatter implements Formatter {
                     else {
                         sb.append(", ");
                     }
-                    sb.append(formatTypeSpec(detail));
+                    sb.append(formatTypeSpec(detail, true));
                 }
                 sb.append('>');
             }
             return sb.toString();
         }
 
-        private static String formatReadMethod(TypeSpec typeSpec) {
-            String type = typeSpec.type;
+        private static String formatReadMethod(CellDef.Property prop) {
+            String type = prop.typeSpec.type;
             if (!Types.isBuiltin(type)) {
                 return String.format("readCell(%s.class)", type);
             }
             if (Types.isPrimitive(type)) {
-                return String.format("read%s()", typeNames.get(type));
+                return String.format("read%s()", ((TypeTrait)prop.trait).typeName);
             }
             else {
-                // collection type
-                return "";
+                return String.format("read%s(%s.class)",
+                        ((TypeTrait)prop.trait).typeName, prop.nativeType);
             }
         }
 
-        private static String formatLengthMethod(TypeSpec typeSpec) {
-            String type = typeSpec.type;
+        private static String formatLengthMethod(CellDef.Property prop) {
+            String type = prop.typeSpec.type;
             if (!Types.isBuiltin(type)) {
                 return "lengthCell";
             }
-            if (Types.isPrimitive(type)) {
-                return String.format("length%s", typeNames.get(type));
-            }
-            else {
-                // collection type
-                return "";
-            }
+            return String.format("length%s", ((TypeTrait)prop.trait).typeName);
         }
 
-        private static String formatWriteMethod(TypeSpec typeSpec) {
-            String type = typeSpec.type;
+        private static String formatWriteMethod(CellDef.Property prop) {
+            String type = prop.typeSpec.type;
             if (!Types.isBuiltin(type)) {
                 return "writeCell";
             }
-            if (Types.isPrimitive(type)) {
-                return String.format("write%s", typeNames.get(type));
-            }
-            else {
-                // collection type
-                return "";
-            }
+            return String.format("write%s", ((TypeTrait)prop.trait).typeName);
         }
 
         public void indent() {
@@ -530,6 +485,101 @@ class JavaFormatter implements Formatter {
             for (int i = 0; i < (baseIndentation + level); ++i) {
                 out.print(tab);
             }
+        }
+
+        static {
+            typeTraits = new HashMap<String, TypeTrait>();
+            
+            TypeTrait typeTrait = new TypeTrait();
+            typeTrait.nativeType = "boolean";
+            typeTrait.objectType = "Boolean";
+            typeTrait.typeName = "Bool";
+            typeTrait.defaultValue = "false";
+            typeTraits.put("bool", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "byte";
+            typeTrait.objectType = "Byte";
+            typeTrait.typeName = "Byte";
+            typeTrait.defaultValue = "0";
+            typeTraits.put("byte", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "byte";
+            typeTrait.objectType = "Byte";
+            typeTrait.typeName = "Byte";
+            typeTrait.defaultValue = "0";
+            typeTraits.put("int8", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "short";
+            typeTrait.objectType = "Short";
+            typeTrait.typeName = "Short";
+            typeTrait.defaultValue = "0";
+            typeTraits.put("int16", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "int";
+            typeTrait.objectType = "Integer";
+            typeTrait.typeName = "Int";
+            typeTrait.defaultValue = "0";
+            typeTraits.put("int32", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "long";
+            typeTrait.objectType = "Long";
+            typeTrait.typeName = "Long";
+            typeTrait.defaultValue = "0";
+            typeTraits.put("int64", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "float";
+            typeTrait.objectType = "Float";
+            typeTrait.typeName = "Float";
+            typeTrait.defaultValue = ".0f";
+            typeTraits.put("float32", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "double";
+            typeTrait.objectType = "Double";
+            typeTrait.typeName = "Double";
+            typeTrait.defaultValue = ".0";
+            typeTraits.put("float64", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "String";
+            typeTrait.objectType = "String";
+            typeTrait.typeName = "String";
+            typeTrait.defaultValue = "\"\"";
+            typeTraits.put("string", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "Calendar";
+            typeTrait.objectType = "Calendar";
+            typeTrait.typeName = "Calendar";
+            typeTrait.defaultValue = "null";
+            typeTraits.put("datetime", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "byte[]";
+            typeTrait.objectType = "Byte[]";
+            typeTrait.typeName = "Bytes";
+            typeTrait.defaultValue = "null";
+            typeTraits.put("bytes", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "ArrayList";
+            typeTrait.objectType = "ArrayList";
+            typeTrait.typeName = "List";
+            typeTrait.defaultValue = "null";
+            typeTraits.put("list", typeTrait);
+            
+            typeTrait = new TypeTrait();
+            typeTrait.nativeType = "HashMap";
+            typeTrait.objectType = "HashMap";
+            typeTrait.typeName = "Map";
+            typeTrait.defaultValue = "null";
+            typeTraits.put("map", typeTrait);
         }
     }
 }

@@ -60,9 +60,9 @@ class Types {
         types.put("float64", new TypeProperty(true, false, false));
         types.put("string", new TypeProperty(true, false, false));
         types.put("datetime", new TypeProperty(true, false, false));
+        types.put("bytes", new TypeProperty(true, false, false));
 
         // Collection types
-        types.put("bytes", new TypeProperty(false, true, false));
         types.put("list", new TypeProperty(false, true, true));
         types.put("map", new TypeProperty(false, true, true));
     }

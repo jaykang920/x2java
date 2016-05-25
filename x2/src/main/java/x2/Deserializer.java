@@ -4,7 +4,7 @@
 package x2;
 
 import java.io.IOException;
-import java.util.Calendar;
+import java.util.*;
 
 import x2.util.*;
 
@@ -206,6 +206,20 @@ public final class Deserializer {
             buffer.setPosition(marker);
         }
         marker = markerSaved;
+        return value;
+    }
+    
+    /** Decodes an ordered list of 32-bit integer values out of the underlying buffer. */
+    public ArrayList<Integer> readList(Class<ArrayList<Integer>> cls) throws IOException {
+        ArrayList<Integer> value = null;
+        int length = readNonnegativeInt();
+        if (length == 0) { return value; }
+        
+        value = new ArrayList<Integer>();
+        
+        for (int i = 0; i < length; ++i) {
+            value.add(new Integer(readInt()));
+        }
         return value;
     }
 
