@@ -24,7 +24,7 @@ public class Binder {
     public void bind(Token token) {
         bind(token.getKey(), token.getValue());
     }
-
+    
     public Token bind(Event e, Handler handler) {
         Lock wlock = rwlock.writeLock();
         wlock.lock();
@@ -38,7 +38,6 @@ public class Binder {
             if (handlerSet.add(handler)) {
                 filter.add(e._getTypeId(), e._getFingerprint());
             }
-
             return new Token(e, handler);
         }
         finally {
@@ -67,7 +66,7 @@ public class Binder {
                 handlerMap.remove(e);
             }
             filter.remove(e._getTypeId(), e._getFingerprint());
-
+            
             return new Token(e, handler);
         }
         finally {
