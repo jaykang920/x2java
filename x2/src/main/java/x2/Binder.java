@@ -45,7 +45,41 @@ public class Binder {
         }
     }
 
-    // buildHandlerChain
+    public int buildHandlerChain(Event e, Event.Equivalent equivalent, List<Handler> handlerChain) {
+        Lock rlock = rwlock.readLock();
+        rlock.lock();
+        try {
+            Event.Tag tag = (Event.Tag)e._getTypeTag();
+            Fingerprint fingerprint = e._getFingerprint();
+            while (tag != null) {
+                int typeId = tag.getTypeId();
+                List<Slot> slots = filter.get(typeId);
+                if (slots != null) {
+                    for (int i = 0, count = slots.size(); i < count; ++i) {
+                        Slot slot = slots.get(i);
+                        if (slot.equivalent(fingerprint)) {
+                            equivalent.innerEvent(e);
+                            equivalent._setFingerprint(slot);
+                            equivalent.innerTypeId(typeId);
+                            
+                            HandlerSet handlers = handlerMap.get(equivalent);
+                            if (handlers != null) {
+                                List<Handler> list = handlers.getList();
+                                for (int j = 0, jCount = list.size(); j < jCount; ++j) {
+                                    handlerChain.add(list.get(j));
+                                }
+                            }
+                        }
+                    }
+                }
+                tag = (Event.Tag)tag.getBase();
+            }
+            return handlerChain.size();
+        }
+        finally {
+            rlock.unlock();
+        }
+    }
 
     public void unbind(Token token) {
         unbind(token.getKey(), token.getValue());

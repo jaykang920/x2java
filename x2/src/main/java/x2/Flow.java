@@ -3,9 +3,14 @@
 
 package x2;
 
+import java.util.*;
+
 /** Represents a logically independent execution flow. */
 public abstract class Flow {
     protected static ThreadLocal<Flow> current;
+    protected static ThreadLocal<Event.Equivalent> equivalent;
+    protected static ThreadLocal<List<Event>> events;
+    protected static ThreadLocal<List<Handler>> handlerChain;
     
     protected Binder binder;
     protected CaseStack caseStack;
@@ -64,5 +69,35 @@ public abstract class Flow {
     
     public void unsubscribe(Binder.Token token) {
         binder.unbind(token);
-    } 
+    }
+    
+    protected void setup() {
+    }
+    
+    protected void teardown() {
+    }
+    
+    protected void dispatch(Event e) {
+        List<Handler> handlers = handlerChain.get();
+        if (handlers.size() != 0) {
+            handlers.clear();
+        }
+        
+        int chainLength = binder.buildHandlerChain(e, equivalent.get(), handlers);
+        if (chainLength == 0) {
+            return;
+        }
+        
+        for (int i = 0, count = handlers.size(); i < count; ++i) {
+            Handler handler = handlers.get(i);
+            try {
+                handler.invoke(e);
+            }
+            catch (Exception ex) {
+                // TODO: handle exception
+            }
+        }
+        
+        handlers.clear();
+    }
 }
