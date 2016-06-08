@@ -16,6 +16,13 @@ public abstract class Flow {
     protected CaseStack caseStack;
     protected String name;
     
+    static {
+        current = new ThreadLocal<Flow>();
+        equivalent = new ThreadLocal<Event.Equivalent>();
+        events = new ThreadLocal<List<Event>>();
+        handlerChain = new ThreadLocal<List<Handler>>();
+    }
+    
     protected Flow() {
         binder = new Binder();
         caseStack = new CaseStack();

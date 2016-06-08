@@ -91,6 +91,10 @@ public class Event extends Cell {
         }
         return true;
     }
+    
+    public final void post() {
+        Hub.post(this);
+    }
 
     // Serialization
 

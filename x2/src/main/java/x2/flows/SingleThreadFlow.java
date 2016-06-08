@@ -11,6 +11,9 @@ import x2.*;
 public class SingleThreadFlow extends EventBasedFlow implements Runnable {
     protected Thread thread;
     
+    public SingleThreadFlow() {
+    }
+    
     public SingleThreadFlow(String name) {
         this.name = name;
     }

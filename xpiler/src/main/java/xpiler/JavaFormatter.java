@@ -72,15 +72,19 @@ class JavaFormatter implements Formatter {
             o.println();
             o.println();
         }
+        o.println("import java.io.IOException;");
         o.println("import java.util.*;");
         o.println();
         o.println("import x2.*;");
+        o.println("import x2.util.*;");
         o.println();
-
-        for (Reference reference : context.doc.getReferences()) {
-            reference.format(context);
+        
+        if (!context.doc.getReferences().isEmpty()) {
+            for (Reference reference : context.doc.getReferences()) {
+                reference.format(context);
+            }
+            o.println();
         }
-        o.println();
     }
 
     public String getDescription() { return description; }
@@ -190,11 +194,12 @@ class JavaFormatter implements Formatter {
         }
 
         private void formatMethods(CellDef def) {
+            formatStaticInitializer(def);
             formatConstructor(def);
             formatInitializer(def);
             formatEqualsTo(def);
             formatHashCode(def);
-            formatIsEquivalend(def);
+            formatIsEquivalent(def);
             formatTypeAccessors(def);
             formatDescribe(def);
 
@@ -205,11 +210,38 @@ class JavaFormatter implements Formatter {
             formatLength(def);
             formatSerialize(def);
         }
+        
+        private void formatStaticInitializer(CellDef def) {
+            String baseTag = def.base;
+            if (baseTag == null || baseTag.isEmpty()) {
+                baseTag = (def.isEvent() ? "Event.tag" : "null");
+            }
+            else {
+                baseTag += ".tag";
+            }
+            out.println();
+            indent(0); out.println("static {");
+            indent(1); out.print(String.format("tag = new Tag(%s, %s.class, %d",
+                baseTag, def.name, def.getProperties().size()));
+            if (def.isEvent()) {
+                out.print(String.format(", %s", ((EventDef)def).id));
+            }
+            out.println(");");
+            indent(0); out.println("}");
+        }
 
         private void formatConstructor(CellDef def) {
             out.println();
             indent(0); out.format("public %s() {", def.name);
             out.println();
+            indent(1); out.println("super(tag.getNumProps());");
+            indent(1); out.println("init();");
+            indent(0); out.println("}");
+
+            out.println();
+            indent(0); out.format("protected %s(int length) {", def.name);
+            out.println();
+            indent(1); out.println("super(length + tag.getNumProps());");
             indent(1); out.println("init();");
             indent(0); out.println("}");
         }
@@ -251,8 +283,8 @@ class JavaFormatter implements Formatter {
             indent(0); out.println("@Override");
             indent(0); out.println("public int hashCode(Fingerprint fingerprint) {");
             if (def.hasProperties()) {
-                indent(1); out.println("Hash hash = new Hash(super.hashCode(fingerprint);");
-                indent(1); out.println("Fingerprint.Capo touched = fingerprint.capo(tag.getOffset());");
+                indent(1); out.println("Hash hash = new Hash(super.hashCode(fingerprint));");
+                indent(1); out.println("Capo touched = fingerprint.capo(tag.getOffset());");
                 for (CellDef.Property prop : def.getProperties()) {
                     indent(1); out.format("if (touched.get(%d)) {", prop.index);
                     out.println();
@@ -267,17 +299,17 @@ class JavaFormatter implements Formatter {
             indent(0); out.println("}");
         }
 
-        private void formatIsEquivalend(CellDef def) {
+        private void formatIsEquivalent(CellDef def) {
             out.println();
             indent(0); out.println("@Override");
-            indent(0); out.println("protected boolean isEquivalent(Cell other) {");
-            indent(1); out.println("if (!super.isEquivalent(other)) {");
+            indent(0); out.println("protected boolean isEquivalent(Cell other, Fingerprint fingerprint) {");
+            indent(1); out.println("if (!super.isEquivalent(other, fingerprint)) {");
             indent(2); out.println("return false;");
             indent(1); out.println("}");
             if (def.hasProperties()) {
                 indent(1); out.format("%s o = (%s)other;", def.name, def.name);
                 out.println();
-                indent(1); out.println("Fingerprint.Capo touched = fingerprint.capo(tag.getOffset());");
+                indent(1); out.println("Capo touched = fingerprint.capo(tag.getOffset());");
                 for (CellDef.Property prop : def.getProperties()) {
                     indent(1); out.format("if (touched.get(%d)) {", prop.index);
                     out.println();
@@ -295,13 +327,13 @@ class JavaFormatter implements Formatter {
         private void formatTypeAccessors(CellDef def) {
             out.println();
             indent(0); out.println("@Override");
-            indent(0); out.format("public %s tag() { return tag; }",
+            indent(0); out.format("public %s _getTypeTag() { return tag; }",
                 (def.isEvent() ? "Cell.Tag" : "Tag"));
             out.println();
             if (def.isEvent()) {
                 out.println();
                 indent(0); out.println("@Override");
-                indent(0); out.println("public int typeId() { return tag.");
+                indent(0); out.println("public int _getTypeId() { return tag.getTypeId(); }");
             }
         }
 
@@ -330,10 +362,10 @@ class JavaFormatter implements Formatter {
         private void formatDeserialize(CellDef def) {
             out.println();
             indent(0); out.println("@Override");
-            indent(0); out.println("public void deserialize(Deserializer deserializer) {");
+            indent(0); out.println("public void deserialize(Deserializer deserializer) throws IOException {");
             indent(1); out.println("super.deserialize(deserializer);");
             if (def.hasProperties()) {
-                indent(1); out.println("Fingerprint.Capo touched = fingerprint.capo(tag.getOffset());");
+                indent(1); out.println("Capo touched = fingerprint.capo(tag.getOffset());");
                 for (CellDef.Property prop : def.getProperties()) {
                     indent(1); out.format("if (touched.get(%d)) {", prop.index);
                     out.println();
@@ -349,10 +381,10 @@ class JavaFormatter implements Formatter {
         private void formatLength(CellDef def) {
             out.println();
             indent(0); out.println("@Override");
-            indent(0); out.println("public void length() {");
+            indent(0); out.println("public int length() {");
             indent(1); out.println("int length = super.length();");
             if (def.hasProperties()) {
-                indent(1); out.println("Fingerprint.Capo touched = fingerprint.capo(tag.getOffset());");
+                indent(1); out.println("Capo touched = fingerprint.capo(tag.getOffset());");
                 for (CellDef.Property prop : def.getProperties()) {
                     indent(1); out.format("if (touched.get(%d)) {", prop.index);
                     out.println();
@@ -372,7 +404,7 @@ class JavaFormatter implements Formatter {
             indent(0); out.println("public void serialize(Serializer serializer) {");
             indent(1); out.println("super.serialize(serializer);");
             if (def.hasProperties()) {
-                indent(1); out.println("Fingerprint.Capo touched = fingerprint.capo(tag.getOffset());");
+                indent(1); out.println("Capo touched = fingerprint.capo(tag.getOffset());");
                 for (CellDef.Property prop : def.getProperties()) {
                     indent(1); out.format("if (touched.get(%d)) {", prop.index);
                     out.println();
