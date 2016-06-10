@@ -10,23 +10,25 @@ import java.util.LinkedList;
 public class BlockingQueue<T> {
     private Queue<T> queue;
     private boolean closing;
-    
+
     public BlockingQueue() {
         queue = new LinkedList<T>();
     }
-    
+
     public void close() {
         close(null);
     }
-    
+
     public void close(T finalItem) {
         synchronized (queue) {
-            queue.offer(finalItem);
+            if (finalItem != null) {
+                queue.offer(finalItem);
+            }
             closing = true;
             queue.notifyAll();
         }
     }
-    
+
     public T dequeue() {
         synchronized (queue) {
             while (queue.size() == 0) {
@@ -43,7 +45,7 @@ public class BlockingQueue<T> {
             return queue.poll();
         }
     }
-    
+
     public int dequeue(List<T> values) {
         synchronized (queue) {
             while (queue.size() == 0) {
@@ -65,7 +67,7 @@ public class BlockingQueue<T> {
             return n;
         }
     }
-    
+
     public void enqueue(T item) {
         synchronized (queue) {
             if (!closing) {
@@ -76,7 +78,7 @@ public class BlockingQueue<T> {
             }
         }
     }
-    
+
     public T tryDequeue() {
         synchronized (queue) {
             if (queue.size() == 0) {
@@ -85,7 +87,7 @@ public class BlockingQueue<T> {
             return queue.poll();
         }
     }
-    
+
     public int tryDequeue(List<T> values) {
         synchronized (queue) {
             if (queue.size() == 0) {

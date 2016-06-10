@@ -10,14 +10,15 @@ import x2.*;
 /** Represents a finite set of application logic. */
 public class SingleThreadFlow extends EventBasedFlow implements Runnable {
     protected Thread thread;
-    
+
     public SingleThreadFlow() {
     }
-    
+
     public SingleThreadFlow(String name) {
         this.name = name;
     }
-    
+
+    @Override
     public Flow startup() {
         synchronized (syncRoot) {
             if (thread == null) {
@@ -30,33 +31,35 @@ public class SingleThreadFlow extends EventBasedFlow implements Runnable {
         }
         return this;
     }
-    
+
+    @Override
     public void shutdown() {
         synchronized (syncRoot) {
             if (thread == null) {
                 return;
             }
-            // enquque FlowStop and quit queue
+            // enquque FlowStop
+            queue.close();
             try {
                 thread.join();
             }
             catch (InterruptedException ie) { }
             thread = null;
-            
+
             caseStack.teardown(this);
             teardown();
         }
     }
-    
+
     public void run() {
         current.set(this);
-        
+
         equivalent.set(new Event.Equivalent());
         events.set(new ArrayList<Event>());
         handlerChain.set(new ArrayList<Handler>());
-        
+
         List<Event> dequeued = events.get();
-        
+
         while (true) {
             if (queue.dequeue(dequeued) == 0) {
                 break;
@@ -66,11 +69,11 @@ public class SingleThreadFlow extends EventBasedFlow implements Runnable {
             }
             dequeued.clear();
         }
-        
+
         handlerChain.set(null);
         events.set(null);
         equivalent.set(null);
-        
+
         current.set(null);
     }
 }
