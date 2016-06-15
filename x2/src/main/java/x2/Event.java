@@ -91,7 +91,7 @@ public class Event extends Cell {
         }
         return true;
     }
-    
+
     public final void post() {
         Hub.post(this);
     }
@@ -142,34 +142,40 @@ public class Event extends Cell {
         /** Gets the type identifier of this event type. */
         public int getTypeId() { return typeId; }
     }
-    
+
     public static class Equivalent extends Event {
         private Event innerEvent;
         private int innerTypeId;
-        
+
+        @Override
+        public boolean equals(Object obj) {
+            return ((Cell)obj).isEquivalent(innerEvent, fingerprint);
+        }
+
+        /*
         @Override
         protected boolean equalsTo(Cell other) {
-            return other.isEquivalent(innerEvent, fingerprint);
         }
+        */
 
         /** Returns the hash code for the current object. */
         @Override
         public int hashCode() {
             return innerEvent.hashCode(fingerprint, innerTypeId);
         }
-        
+
         public Event innerEvent() {
             return innerEvent;
         }
-        
+
         public void innerEvent(Event value) {
             innerEvent = value;
         }
-        
+
         public int innerTypeId() {
             return innerTypeId;
         }
-        
+
         public void innerTypeId(int value) {
             innerTypeId = value;
         }
