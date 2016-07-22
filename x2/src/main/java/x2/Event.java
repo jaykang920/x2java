@@ -152,12 +152,6 @@ public class Event extends Cell {
             return ((Cell)obj).isEquivalent(innerEvent, fingerprint);
         }
 
-        /*
-        @Override
-        protected boolean equalsTo(Cell other) {
-        }
-        */
-
         /** Returns the hash code for the current object. */
         @Override
         public int hashCode() {
