@@ -204,6 +204,12 @@ class XmlHandler implements Handler {
             CellDef def = new CellDef();
             def.name = attributes.getValue("name");
             def.base = attributes.getValue("base");
+            
+            String local = attributes.getValue("local");
+            if (local != null && local.endsWith("rue")) {
+                def.isLocal = true;
+            }
+            
             doc.getDefinitions().add(def);
             current = def;
             if (comment != null) {
@@ -216,6 +222,12 @@ class XmlHandler implements Handler {
             def.name = attributes.getValue("name");
             def.base = attributes.getValue("base");
             def.id = attributes.getValue("id");
+            
+            String local = attributes.getValue("local");
+            if (local != null && local.endsWith("rue")) {
+                def.isLocal = true;
+            }
+
             doc.getDefinitions().add(def);
             current = def;
             if (comment != null) {

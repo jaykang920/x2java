@@ -196,19 +196,23 @@ class JavaFormatter implements Formatter {
         private void formatMethods(CellDef def) {
             formatStaticInitializer(def);
             formatConstructor(def);
-            formatInitializer(def);
+            if (!def.isLocal) {
+                formatInitializer(def);
+            }
             formatEqualsTo(def);
             formatHashCode(def);
             formatIsEquivalent(def);
             formatTypeAccessors(def);
             formatDescribe(def);
 
-            out.println();
-            indent(0); out.println("// Serialization");
+            if (!def.isLocal) {
+                out.println();
+                indent(0); out.println("// Serialization");
 
-            formatDeserialize(def);
-            formatLength(def);
-            formatSerialize(def);
+                formatDeserialize(def);
+                formatLength(def);
+                formatSerialize(def);
+            }
         }
         
         private void formatStaticInitializer(CellDef def) {
@@ -235,14 +239,18 @@ class JavaFormatter implements Formatter {
             indent(0); out.format("public %s() {", def.name);
             out.println();
             indent(1); out.println("super(tag.getNumProps());");
-            indent(1); out.println("init();");
+            if (!def.isLocal) {
+                indent(1); out.println("init();");
+            }
             indent(0); out.println("}");
 
             out.println();
             indent(0); out.format("protected %s(int length) {", def.name);
             out.println();
             indent(1); out.println("super(length + tag.getNumProps());");
-            indent(1); out.println("init();");
+            if (!def.isLocal) {
+                indent(1); out.println("init();");
+            }
             indent(0); out.println("}");
         }
 
@@ -525,7 +533,7 @@ class JavaFormatter implements Formatter {
             TypeTrait typeTrait = new TypeTrait();
             typeTrait.nativeType = "boolean";
             typeTrait.objectType = "Boolean";
-            typeTrait.typeName = "Bool";
+            typeTrait.typeName = "Boolean";
             typeTrait.defaultValue = "false";
             typeTraits.put("bool", typeTrait);
             

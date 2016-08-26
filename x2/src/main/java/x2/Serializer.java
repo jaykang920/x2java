@@ -178,7 +178,7 @@ public final class Serializer {
 
     // Write/length methods for composite types
     
-    public int lengthBytes(byte[] value) {
+    public static int lengthBytes(byte[] value) {
         int count = (value == null) ? 0 : value.length;
         int length = lengthNonnegativeInt(count);
         return length + count;
