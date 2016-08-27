@@ -26,10 +26,14 @@ public abstract class Link extends Case {
     }
 
     /** Closes this link and releases all the associated resources. */
+    @Override
     public void close() {
+        if (closed) { return; }
+
         synchronized (names) {
             names.remove(name);
         }
+        
         super.close();
     }
 

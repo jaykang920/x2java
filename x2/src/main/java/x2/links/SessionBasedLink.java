@@ -7,9 +7,9 @@ import java.util.concurrent.locks.*;
 
 import x2.*;
 
-/**  Abstract base class for session-based links. */
+/** Abstract base class for session-based links. */
 public abstract class SessionBasedLink extends Link {
-    private ReadWriteLock rwlock;
+    protected ReadWriteLock rwlock;
 
     static {
         // event factory registration here

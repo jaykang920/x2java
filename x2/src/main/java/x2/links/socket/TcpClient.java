@@ -3,6 +3,10 @@
 
 package x2.links.socket;
 
-public class TcpClient {
+import x2.links.*;
 
+public class TcpClient extends ClientLink {
+    public TcpClient(String name) {
+        super(name);
+    }
 }

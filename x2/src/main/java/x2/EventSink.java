@@ -8,7 +8,7 @@ import java.util.*;
 
 /** Cleanup helper base class for any event-consuming classes. */
 public abstract class EventSink {
-    private volatile boolean closed;
+    protected volatile boolean closed;
     
     private ArrayList<Binder.Token> bindings;
     private WeakReference<Flow> flow;
