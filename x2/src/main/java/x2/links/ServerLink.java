@@ -63,6 +63,10 @@ public abstract class ServerLink extends SessionBasedLink {
         super.close();
     }
 
+    @Override
+    protected void onSessionConnectedInternal(boolean result, Object context) {
+    }
+
     /** Sends out the specified event through this link channel. */
     public void send(Event e) {
         Lock rlock = rwlock.readLock();

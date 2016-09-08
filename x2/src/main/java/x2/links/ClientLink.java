@@ -39,6 +39,25 @@ public abstract class ClientLink extends SessionBasedLink {
         super.close();
     }
 
+    protected void onConnectInternal(LinkSession linkSession) {
+        //linkSession.polatiry(true);
+        onLinkSessionConnectedInternal(true, linkSession);
+    }
+
+    @Override
+    protected void onSessionConnectedInternal(boolean result, Object context) {
+        if (result) {
+            Lock wlock = rwlock.writeLock();
+            wlock.lock();
+            try {
+                session = (LinkSession)context;
+            }
+            finally {
+                wlock.unlock();
+            }
+        }
+    }
+
     @Override
     public void send(Event e) {
         LinkSession currentSession = session();

@@ -71,7 +71,7 @@ public final class Log {
     public static void debug(String message) {
         log(Level.Debug, message);
     }
-    public static void debugt(String format, Object... args) {
+    public static void debug(String format, Object... args) {
         log(Level.Debug, format, args);
     }
 

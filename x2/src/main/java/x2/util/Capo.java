@@ -5,6 +5,8 @@ package x2.util;
 
 import x2.*;
 
+import x2.util.*;
+
 /** Provides an offset-based read-only window on a fingerprint. */
 public class Capo {
     private Fingerprint fingerprint;
@@ -21,7 +23,7 @@ public class Capo {
     /** Gets the bit value at the actual index of (offset + index). */
     public boolean get(int index) {
         int effectiveIndex = offset + index;
-        if (effectiveIndex < 0 || fingerprint.length() <= effectiveIndex) {
+        if (effectiveIndex < 0 || fingerprint.getLength() <= effectiveIndex) {
             return false;
         }
         return fingerprint.get(effectiveIndex);

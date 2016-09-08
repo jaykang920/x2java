@@ -9,7 +9,7 @@ import x2.util.*;
 
 /** Common base class for all events. */
 public class Event extends Cell {
-    protected static final Tag tag = new Tag(null, Event.class, 0, 0);
+    protected static final Tag tag = new Tag(null, Event.class, 1, 0);
 
     private int handle;
 

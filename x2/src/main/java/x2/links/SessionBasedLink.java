@@ -21,6 +21,20 @@ public abstract class SessionBasedLink extends Link {
         rwlock = new ReentrantReadWriteLock();
     }
 
+    protected void onLinkSessionConnectedInternal(boolean result, Object context) {
+        if (result) {
+            // handle
+            // connected
+        }
+
+        onSessionConnectedInternal(result, context);
+
+        Hub.post(new LinkSessionConnected()
+            .setLinkName(name())
+            .setResult(result)
+            .setContext(context));
+    }
+
     /** Called when a new session creation attempt is completed. */
     protected void onSessionConnected(boolean result, Object context) {
     }
@@ -28,6 +42,8 @@ public abstract class SessionBasedLink extends Link {
     /** Called when an existing link session is closed. */
     protected void onSessionDisconnected(int handle, Object context) {
     }
+
+    protected abstract void onSessionConnectedInternal(boolean result, Object context);
 
     /** Initializes this link on startup. */
     @Override

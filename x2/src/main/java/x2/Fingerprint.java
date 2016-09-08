@@ -181,6 +181,7 @@ public class Fingerprint implements Comparable<Fingerprint> {
      */
     public boolean get(int index) {
         if (index < 0 || length <= index) {
+            Log.debug("Fingerprint.get length=%d index=%d", length, index);
             throw new IndexOutOfBoundsException();
         }
         if ((index & (-1 << 5)) != 0) {  // index >= 32
