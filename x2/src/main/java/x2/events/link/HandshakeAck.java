@@ -17,6 +17,7 @@ public class HandshakeAck extends Event {
         return result_;
     }
     public HandshakeAck setResult(boolean value) {
+        fingerprint.touch(tag.getOffset() + 0);
         result_ = value;
         return this;
     }

@@ -44,6 +44,38 @@ public class TcpServer extends ServerLink implements Runnable {
         new Thread(this).start();
     }
 
+    private void onAccept(SelectionKey key) {
+        ServerSocketChannel socketChannel = (ServerSocketChannel)key.channel();
+        SocketChannel clientChannel;
+        try {
+            clientChannel = socketChannel.accept();
+        } catch (IOException ioe) {
+            Log.info("%s accept error %s", name(), ioe.toString());
+            return;
+        }
+        if (clientChannel == null) {
+            return;
+        }
+        
+        try {
+            Log.info("%s accepted from %s",
+                name(), clientChannel.getRemoteAddress());
+
+            clientChannel.configureBlocking(false);
+
+            TcpSession session = new TcpSession(this, clientChannel);
+
+            clientChannel.register(selector,
+                SelectionKey.OP_READ | SelectionKey.OP_WRITE, session);
+
+            onAcceptInternal(session);
+        }
+        catch (Exception e) {
+            // log
+            e.printStackTrace();
+        }
+    }
+
     public void run() {
         try {
             ssc = ServerSocketChannel.open();
@@ -68,23 +100,18 @@ public class TcpServer extends ServerLink implements Runnable {
                     SelectionKey key = iterator.next();
 
                     if (key.isAcceptable()) {
-                        SocketChannel clientChannel;
-                        try {
-                            clientChannel = ssc.accept();
-                        } catch (IOException ioe) {
-                            Log.info("%s accept error %s", name(), ioe.toString());
-                            continue;
-                        }
-                        clientChannel.configureBlocking(false);
-                        
-                        Log.info("%s accepted from %s", name(), clientChannel.getRemoteAddress());
-
-                        clientChannel.register(selector, SelectionKey.OP_READ);
-
+                        onAccept(key);
                     } else if (key.isReadable()) {
-                        //
+                        TcpSession session = (TcpSession)key.attachment();
+                        if (session != null) {
+                            session.onRead(key);
+                        }
+                    } else if (key.isWritable()) {
+                        TcpSession session = (TcpSession)key.attachment();
+                        if (session != null) {
+                            session.onWrite(key);
+                        }
                     }
-
                 }
             }
         }
@@ -93,6 +120,7 @@ public class TcpServer extends ServerLink implements Runnable {
         }
         catch (Exception e) {
             Log.error(e.toString());
+            e.printStackTrace();
         }
         finally {
             if (selector != null && selector.isOpen()) {

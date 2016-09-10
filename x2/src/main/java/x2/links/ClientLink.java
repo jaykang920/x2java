@@ -6,6 +6,7 @@ package x2.links;
 import java.util.concurrent.locks.*;
 
 import x2.*;
+import x2.util.*;
 
 /** Common base class for single-session client links. */
 public abstract class ClientLink extends SessionBasedLink {
@@ -62,7 +63,8 @@ public abstract class ClientLink extends SessionBasedLink {
     public void send(Event e) {
         LinkSession currentSession = session();
         if (currentSession == null) {
-            // drop event
+            Log.warn("%s dropped event %s", name(), e.toString());
+            return;
         }
         currentSession.send(e);
     }

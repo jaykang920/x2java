@@ -15,7 +15,7 @@ public class SegmentedByteBuffer {
     private int offset;
     private Stack<ByteBuffer> available;
 
-    private Object syncObj;
+    private final Object syncRoot = new Object();
 
     /** Constructs a new SegmentedByteBuffer object with the specified size
      *  parameters.
@@ -26,8 +26,6 @@ public class SegmentedByteBuffer {
 
         buffer = ByteBuffer.allocate(chunkSize);
         available = new Stack<ByteBuffer>();
-
-        syncObj = new Object();
     }
 
     /** Acquires an available ByteBuffer object, or null if not available. */
@@ -39,7 +37,7 @@ public class SegmentedByteBuffer {
         }
 
         int position;
-        synchronized (syncObj) {
+        synchronized (syncRoot) {
             if ((chunkSize - segmentSize) < offset) {
                 return null;
             }

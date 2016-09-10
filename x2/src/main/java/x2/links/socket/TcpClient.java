@@ -55,20 +55,18 @@ public class TcpClient extends ClientLink implements Runnable {
         }
 
         Log.info("%s connected", name());
-        key.interestOps(SelectionKey.OP_READ);
+        key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
         LinkSession session = new TcpSession(this, channel);
         onConnectInternal(session);
     }
 
     private void onRead(SelectionKey key) {
-        SocketChannel channel = (SocketChannel)key.channel();
-        long l;
-        try {
-            //l = channel.read(rxBuffer);
-        } catch (Exception e) {
+        ((TcpSession)session).onRead(key);
+    }
 
-        }
+    private void onWrite(SelectionKey key) {
+        ((TcpSession)session).onWrite(key);
     }
 
     public void run() {
@@ -97,11 +95,10 @@ public class TcpClient extends ClientLink implements Runnable {
                         onConnect(key);
                     } else if (key.isReadable()) {
                         onRead(key);
+                    } else if (key.isWritable()) {
+                        onWrite(key);
                     }
                 }
-
-
-                //
             }
         }
         catch (ClosedSelectorException cse) {

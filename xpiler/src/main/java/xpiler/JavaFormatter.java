@@ -186,6 +186,8 @@ class JavaFormatter implements Formatter {
                 indent(0); out.format("public %s set%s(%s value) {",
                         def.name, prop.name, prop.nativeType);
                 out.println();
+                indent(1); out.format("fingerprint.touch(tag.getOffset() + %d);", prop.index);
+                out.println();
                 indent(1); out.format("%s = value;", prop.nativeName);
                 out.println();
                 indent(1); out.println("return this;");

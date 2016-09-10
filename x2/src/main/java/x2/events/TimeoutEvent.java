@@ -18,6 +18,7 @@ public class TimeoutEvent extends Event {
         return key_;
     }
     public TimeoutEvent setKey(Object value) {
+        fingerprint.touch(tag.getOffset() + 0);
         key_ = value;
         return this;
     }
@@ -26,6 +27,7 @@ public class TimeoutEvent extends Event {
         return intParam_;
     }
     public TimeoutEvent setIntParam(int value) {
+        fingerprint.touch(tag.getOffset() + 1);
         intParam_ = value;
         return this;
     }

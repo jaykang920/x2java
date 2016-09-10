@@ -28,7 +28,7 @@ public final class Deserializer {
             typeId = readInt();
         }
         catch (Exception e) {
-            // error
+            Log.error("Deserializer.create : error reading event type id");
             return null;
         }
         return EventFactory.create(typeId);
@@ -265,6 +265,10 @@ public final class Deserializer {
 
     /** Decodes a 32-bit unsigned integer out of the underlying buffer. */
     public int readVariableUInt(Mutable<Integer> length) throws IOException {
+        return readVariableUInt(buffer, length);
+    }
+
+    public static int readVariableUInt(Buffer buffer, Mutable<Integer> length) throws IOException {
         // Unsigned LEB128 decoding
         int value = 0;
         int i, shift = 0;

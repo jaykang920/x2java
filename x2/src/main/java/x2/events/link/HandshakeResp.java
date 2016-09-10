@@ -17,6 +17,7 @@ public class HandshakeResp extends Event {
         return data_;
     }
     public HandshakeResp setData(byte[] value) {
+        fingerprint.touch(tag.getOffset() + 0);
         data_ = value;
         return this;
     }

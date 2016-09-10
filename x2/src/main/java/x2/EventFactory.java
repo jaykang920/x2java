@@ -6,6 +6,8 @@ package x2;
 import java.lang.reflect.*;
 import java.util.*;
 
+import x2.util.*;
+
 /** Holds a map of retrievable events and their runtime types. */
 public final class EventFactory {
     private static Map<Integer, Class<?>> map;
@@ -21,14 +23,14 @@ public final class EventFactory {
     public static Event create(int typeId) {
         Class<?> cls = map.get(typeId);
         if (cls == null) {
-            // error
+            Log.error("EventFactory.create : unknown event type id %d", typeId);
             return null;
         }
         try {
             return (Event)cls.newInstance();
         }
         catch (Exception e) {
-            // error
+            Log.error("EventFactory.create : error instantiating class %s", cls.toString());
             return null;
         }
     }
@@ -36,8 +38,8 @@ public final class EventFactory {
     /** Registers the specified runtime type as a retrievable event. */
     public static void register(Class<?> cls) {
         try {
-            Field field = cls.getField("TypeId");
-            int typeId = field.getInt(null);
+            Event e = (Event)cls.newInstance();
+            int typeId = e._getTypeId();
             register(typeId, cls);
         }
         catch (Exception e) {

@@ -314,6 +314,19 @@ public final class Serializer {
         return length;
     }
 
+    public static int writeVariableUInt(byte[] buffer, int value) {
+        int i = 0;
+        do {
+            byte b = (byte)(value & 0x7f);
+            value >>= 7;
+            if (value != 0) {
+                b |= 0x80;
+            }
+            buffer[i++] = b;
+        } while (value != 0);
+        return i;
+    }
+
     public static int lengthVariableULong(long value) {
         if ((value & 0xffffffffffffff80L) == 0) { return 1; }
         if ((value & 0xffffffffffffc000L) == 0) { return 2; }

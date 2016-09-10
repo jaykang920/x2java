@@ -19,6 +19,7 @@ public class LinkSessionConnected extends Event {
         return linkName_;
     }
     public LinkSessionConnected setLinkName(String value) {
+        fingerprint.touch(tag.getOffset() + 0);
         linkName_ = value;
         return this;
     }
@@ -27,6 +28,7 @@ public class LinkSessionConnected extends Event {
         return result_;
     }
     public LinkSessionConnected setResult(boolean value) {
+        fingerprint.touch(tag.getOffset() + 1);
         result_ = value;
         return this;
     }
@@ -35,6 +37,7 @@ public class LinkSessionConnected extends Event {
         return context_;
     }
     public LinkSessionConnected setContext(Object value) {
+        fingerprint.touch(tag.getOffset() + 2);
         context_ = value;
         return this;
     }
