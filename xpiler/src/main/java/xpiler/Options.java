@@ -69,7 +69,7 @@ class Options {
         out.println("  -s (--spec) spec   : specify the target formatter");
 
         for (Map.Entry<String, Formatter> entry : Xpiler.getFormatters().entrySet()) {
-            out.format("%20s : %s", entry.getKey(), entry.getValue().getDescription());
+            out.format("%20s : %s", entry.getKey(), entry.getValue().description());
             if (entry.getKey() == DEFAULT_SPEC) {
                 out.print(" (default)");
             }

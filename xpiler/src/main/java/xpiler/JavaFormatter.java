@@ -87,7 +87,7 @@ class JavaFormatter implements Formatter {
         }
     }
 
-    public String getDescription() { return description; }
+    public String description() { return description; }
 
     private boolean isUpToDate(String path, String outDir, Definition def) {
         File source = new File(path);
@@ -108,10 +108,21 @@ class JavaFormatter implements Formatter {
         private int baseIndentation = 0;
 
         @Override
-        public void formatReference(Reference reference) {
-            out.format("import %s.*;",
-                    reference.target.replace('/', '.').toLowerCase());
-            out.println();;
+        public void formatCell(CellDef def) {
+            def.baseClass = def.base;
+            if (StringUtil.isNullOrEmpty(def.baseClass)) {
+                def.baseClass = (def.isEvent() ? "Event" : "Cell");
+            }
+            indent(0); out.format("public class %s extends %s {\n",
+                    def.name, def.baseClass);
+            indent();
+            indent(0); out.println("protected static Tag tag;");
+            preprocessProperties(def);
+            formatPropertyFields(def);
+            formatProperties(def);
+            formatMethods(def);
+            unindent();
+            indent(0); out.println('}');
         }
 
         @Override
@@ -147,21 +158,10 @@ class JavaFormatter implements Formatter {
         }
 
         @Override
-        public void formatCell(CellDef def) {
-            def.baseClass = def.base;
-            if (StringUtil.isNullOrEmpty(def.baseClass)) {
-                def.baseClass = (def.isEvent() ? "Event" : "Cell");
-            }
-            indent(0); out.format("public class %s extends %s {\n",
-                    def.name, def.baseClass);
-            indent();
-            indent(0); out.println("protected static Tag tag;");
-            preprocessProperties(def);
-            formatPropertyFields(def);
-            formatProperties(def);
-            formatMethods(def);
-            unindent();
-            indent(0); out.println('}');
+        public void formatReference(Reference def) {
+            out.format("import %s.*;",
+                    def.target.replace('/', '.').toLowerCase());
+            out.println();;
         }
 
         private void formatPropertyFields(CellDef def) {
