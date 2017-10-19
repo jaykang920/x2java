@@ -1,0 +1,10 @@
+<x2 namespace="x2samples">
+  <definitions>
+    <event name="HelloReq" id="1">
+        <property name="Name" type="string"/>
+    </event>
+    <event name="HelloResp" id="2">
+        <property name="Greeting" type="string"/>
+    </event>
+  </definitions>
+</x2>

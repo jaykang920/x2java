@@ -22,6 +22,6 @@ if [ -z "$X2JAVA_HOME" ] ; then
   cd - > /dev/null
 fi
 
-CP=$CLASSPATH:$X2JAVA_HOME/lib/xpiler-0.1.0.jar
+CP=$CLASSPATH:$X2JAVA_HOME/lib/xpiler-0.2.0.jar
 
 java -cp "$CP" xpiler.Main "$@"

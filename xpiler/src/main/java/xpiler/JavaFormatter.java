@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Jae-jun Kang
+// Copyright (c) 2016-2017 Jae-jun Kang
 // See the file LICENSE for details.
 
 package xpiler;
@@ -75,8 +75,8 @@ class JavaFormatter implements Formatter {
         o.println("import java.io.IOException;");
         o.println("import java.util.*;");
         o.println();
-        o.println("import x2.*;");
-        o.println("import x2.util.*;");
+        o.println("import x2java.*;");
+        o.println("import x2java.util.*;");
         o.println();
         
         if (!context.doc.getReferences().isEmpty()) {
