@@ -262,15 +262,14 @@ public class Buffer {
             throw new IndexOutOfBoundsException();
         }
         position = adjusted;
-        // Update the current block.
         int blockIndex = position >> SIZE_EXPONENT;
+        // Prepare for blockFeed().
         if ((blockIndex != 0) && ((position & REMAINDER_MASK) == 0)) {
             --blockIndex;
         }
-        if (blockIndex != currentIndex) {
-            currentIndex = blockIndex;
-            current = blocks.get(currentIndex);
-        }
+        // Force to update the current block.
+        currentIndex = blockIndex;
+        current = blocks.get(currentIndex);
     }
 
     public void shrink(int numBytes) {

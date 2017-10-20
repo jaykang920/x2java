@@ -33,7 +33,7 @@ class Options {
             switch (getopt.getOpt()) {
             case 's':
                 spec = getopt.getOptArg().toLowerCase();
-                if (!Xpiler.getFormatters().containsKey(spec)) {
+                if (!Main.getFormatters().containsKey(spec)) {
                     System.err.format("Unknown target formatter specified: %s\n", spec);
                     System.exit(1);
                 }
@@ -57,18 +57,18 @@ class Options {
         }
         return getopt.getOptInd();
     }
-  
+
     private static void printUsage() {
         PrintStream out = System.out;
         out.println("usage: xpiler (options) [path...]");
         out.println(" options:");
-        out.println("  -o (--out-dir) dir : specify the output root directory");
-        out.println("  -r (--recursive)   : process subdirectories recursively");
         out.println("  -f (--force)       : force all to be recompiled");
         out.println("  -h (--help)        : print this message and quit");
-        out.println("  -s (--spec) spec   : specify the target formatter");
+        out.println("  -o (--out-dir) dir : specifies the output root directory");
+        out.println("  -r (--recursive)   : process subdirectories recursively");
+        out.println("  -s (--spec) spec   : specifies the target formatter");
 
-        for (Map.Entry<String, Formatter> entry : Xpiler.getFormatters().entrySet()) {
+        for (Map.Entry<String, Formatter> entry : Main.getFormatters().entrySet()) {
             out.format("%20s : %s", entry.getKey(), entry.getValue().description());
             if (entry.getKey() == DEFAULT_SPEC) {
                 out.print(" (default)");

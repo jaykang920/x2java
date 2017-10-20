@@ -16,7 +16,7 @@ class JavaFormatter implements Formatter {
             def.name = StringUtil.firstToUpper(def.name);
         }
 
-        if (!Xpiler.getOptions().isForced()) {
+        if (!Main.getOptions().isForced()) {
             boolean flag = true;
             for (Definition def : definitions) {
                 if (!isUpToDate(doc.inputPath, outDir, def)) {
